@@ -1,0 +1,31 @@
+node_modules/
+**/node_modules/
+dist/
+build/
+coverage/
+*.log
+.DS_Store
+
+# Env files
+.env
+.env.*
+!.env.example
+
+# React Native
+apps/mobile/android/.gradle/
+apps/mobile/android/app/build/
+apps/mobile/android/build/
+apps/mobile/android/local.properties
+apps/mobile/android/captures/
+apps/mobile/android/.idea/
+apps/mobile/android/.project
+apps/mobile/android/.classpath
+apps/mobile/android/.settings/
+apps/mobile/android/*.iml
+apps/mobile/ios/Pods/
+apps/mobile/ios/build/
+
+# IDE
+.idea/
+.vscode/
+
