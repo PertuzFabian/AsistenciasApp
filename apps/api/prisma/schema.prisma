@@ -1,0 +1,154 @@
+// Prisma schema for AsistenciasApp
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  COORDINATOR
+  TEACHER
+}
+
+enum Status {
+  ACTIVE
+  INACTIVE
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  EXCUSED
+}
+
+enum AttendanceMethod {
+  NFC
+  MANUAL
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  phone        String?
+  role         Role
+  status       Status   @default(ACTIVE)
+  schoolId     String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  school       School?  @relation(fields: [schoolId], references: [id])
+  teaching     Course[] @relation("CourseTeacher")
+  sessions     AttendanceSession[]
+  resets       PasswordReset[]
+}
+
+model School {
+  id        String   @id @default(cuid())
+  name      String
+  city      String
+  address   String
+  phone     String
+  email     String
+  startDate DateTime
+  endDate   DateTime
+  status    Status   @default(ACTIVE)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users     User[]
+  courses   Course[]
+  students  Student[]
+}
+
+model Course {
+  id           String   @id @default(cuid())
+  schoolId     String
+  name         String
+  academicYear Int
+  teacherId    String?
+  status       Status   @default(ACTIVE)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  school       School   @relation(fields: [schoolId], references: [id])
+  teacher      User?    @relation("CourseTeacher", fields: [teacherId], references: [id])
+  enrollments  Enrollment[]
+  sessions     AttendanceSession[]
+
+  @@unique([schoolId, name, academicYear])
+}
+
+model Student {
+  id            String   @id @default(cuid())
+  schoolId      String
+  fullName      String
+  guardianName  String?
+  guardianPhone String?
+  guardianEmail String?
+  nfcUid        String?  @unique
+  status        Status   @default(ACTIVE)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  school        School   @relation(fields: [schoolId], references: [id])
+  enrollments   Enrollment[]
+  records       AttendanceRecord[]
+}
+
+model Enrollment {
+  id        String   @id @default(cuid())
+  courseId  String
+  studentId String
+  createdAt DateTime @default(now())
+
+  course    Course   @relation(fields: [courseId], references: [id])
+  student   Student  @relation(fields: [studentId], references: [id])
+
+  @@unique([courseId, studentId])
+}
+
+model AttendanceSession {
+  id        String   @id @default(cuid())
+  courseId  String
+  teacherId String
+  date      DateTime
+  createdAt DateTime @default(now())
+
+  course    Course   @relation(fields: [courseId], references: [id])
+  teacher   User     @relation(fields: [teacherId], references: [id])
+  records   AttendanceRecord[]
+
+  @@unique([courseId, date])
+}
+
+model AttendanceRecord {
+  id        String   @id @default(cuid())
+  sessionId String
+  studentId String
+  status    AttendanceStatus
+  method    AttendanceMethod
+  timestamp DateTime @default(now())
+
+  session   AttendanceSession @relation(fields: [sessionId], references: [id])
+  student   Student           @relation(fields: [studentId], references: [id])
+
+  @@unique([sessionId, studentId])
+}
+
+model PasswordReset {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id])
+}
